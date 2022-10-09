@@ -3,10 +3,11 @@ import time
 import pygame
 import random
 from pygame import mixer
+highscore = 0
 
 while True:
-    quit1 = None
-    restart = None
+    quit1 = None #no value for global
+    restart = None #no value for global
     mixer.init() #initializes the music player
     mixer.music.load("Tetris.mp3") #loads the sound file into the mixer
     mixer.music.set_volume(0.0) #sets the volume of the music
@@ -39,10 +40,15 @@ while True:
             self.rect.center = (250, 600) #starting location
 
         def update(self): #what happens when the game updates in 60 fps
-            global quit1
-            quit1 = False
-            global restart
-            restart = False
+            global quit1 #new global
+            quit1 = False #starting boolean
+            global restart #new global
+            restart = False #starting boolean
+            image = pygame.image.load("snorlaxx.png")
+            width = image.get_width()  # puts width of image into variable
+            height = image.get_height()  # puts height of image into variable
+            self.image = pygame.transform.scale(image, (int(width * .13), int(height * .13)))  # player takes up
+
             keystate = pygame.key.get_pressed() #determines state of whether keys are being pressed down
             if keystate[pygame.K_UP]: #if the up key is being pressed
                 self.rect.y -= 5 #move up 5, seems opposite because of the coordinate plane formatting in pygame
@@ -50,12 +56,20 @@ while True:
                 self.rect.y += 5 #move down five
             elif keystate[pygame.K_LEFT]: #if left arrow key,
                 self.rect.x -= 10 #move left five
+                self.image = pygame.image.load("snorlax_left.png")
+                width = self.image.get_width()  # puts width of image into variable
+                height = self.image.get_height()  # puts height of image into variable
+                self.image = pygame.transform.scale(self.image, (int(width * .23), int(height * .23)))  # player takes up
             elif keystate[pygame.K_RIGHT]: #if right arrow key,
                 self.rect.x += 10 #move right five
-            elif keystate[pygame.K_q]:
-                quit1 = True
-            elif keystate[pygame.K_SPACE]:
-                restart = True
+                self.image = pygame.image.load("snorlax_right.png")
+                width = self.image.get_width()  # puts width of image into variable
+                height = self.image.get_height()  # puts height of image into variable
+                self.image = pygame.transform.scale(self.image, (int(width * .23), int(height * .23)))  # player takes up
+            elif keystate[pygame.K_q]: #if Q key is pressed (quit)
+                quit1 = True #global variable is set to true
+            elif keystate[pygame.K_SPACE]: #when space pressed
+                restart = True #global variable set to true
 
 
     player = Player(.13) #calls player to a variable
@@ -70,7 +84,7 @@ while True:
             height = image.get_height() #puts height into variable
             self.image = pygame.transform.scale(image, (int(width * scale), int(height * scale))) #transforms the image to scale
             self.rect = self.image.get_rect() #hitbox
-            self.rect.center = (random.randint(50, 450), random.randint(-15000,-200)) #spawn location
+            self.rect.center = (random.randint(50, 450), random.randint(-15000,-1000)) #spawn location
 
 
         def update(self): #for each frame,
@@ -125,32 +139,36 @@ while True:
                  quit()
 
         screen.blit(background_img, (-500, 0)) #blits background image to specific location
-        point_label = font.render(f"score: {points}", True, (255, 255, 255)) #keeps track of points in corner, and dictates color
+        point_label = font.render(f"Score: {points}", True, (255, 255, 255)) #keeps track of points in corner, and dictates color
         screen.blit(point_label, (20, 20)) #location of point tracker
         directions = font.render("Use the arrow keys to move the white square.", True, (255, 255, 255)) #text which states directions, color
         screen.blit(directions, (75, 660)) #location of directions
-        miss_label = font.render(f"misses: {misses}", True, (255, 255, 255)) #text that counts misses
+        miss_label = font.render(f"Misses: {misses}", True, (255, 255, 255)) #text that counts misses
         screen.blit(miss_label, (410, 20)) #location of misses
         instructions = font.render("Press \"q\" to quit.     Press Space to restart.", True, (255, 255, 255))  # text that counts misses
-        screen.blit(instructions, (85, 680))  #
+        screen.blit(instructions, (85, 680))  #location of instructions
 
 
         #player_group.draw(screen) #creates screen
         player_group.update() #updates the screen
-        if quit1 == True:
-            pygame.display.quit()
+        if quit1 == True: #when q is clicked, quit becomes true
+            pygame.display.quit() #when true game quits
             pygame.quit()
 
-        if restart == True:
-            pygame.display.quit()
+        if restart == True: #when space is pressed
+            if points > highscore:
+                highscore = points
+                print(highscore)
+            pygame.display.quit() #game quits
             pygame.quit()
-            break
+
+            break #restarts
 
         screen.blit(player.image, player.rect)
         hit_list = pygame.sprite.spritecollide(player, enemy_group, True) #if player and enemy group collide,
         for hit in hit_list: #for each collision added to the list above
             points +=1 #add one point
-            print(points) #print points in console(?)
+
 
         enemy_group.draw(screen) #draws enemies
         enemy_group.update() #updates enemy group, causes them to move down
@@ -160,24 +178,28 @@ while True:
         miss_list = pygame.sprite.spritecollide(Bar, enemy_group, True) #for each miss: when the enemy hits the bar,
         for miss in miss_list: #for each contact as listed above
             misses += 1 #add one to misses
-            print(misses) #print into console
+
 
         if points + misses >= 50: #when points and misses = 50 (total amount of enemies)
             font = pygame.font.SysFont(None, 50) #enlargens font
-            img = font.render("GAME OVER!", True, (255, 0, 0)) #sets text to GAME OVER! and the color
+            img = font.render("GAME OVER!", True, (0, 0, 0)) #sets text to GAME OVER! and the color
             screen.blit(img, (140, 20)) #blits the text over the center of the screen
             font = pygame.font.SysFont(None, 20)
-
+            highscore_end = font.render(f"HIGHSCORE: {highscore}", True, (255,255,255))
+            screen.blit(highscore_end, (10,5))
             subtitle = font.render(f"Game will restart in {5-int(count/60)} seconds", True, (0, 0, 0))
             screen.blit(subtitle, (150, 60))
             #screen.blit(point_label, (205, 115)) #blits points under (on y-axis) game over
             #screen.blit(miss_label, (205, 130)) #blits misses under (on y-axis) game over
             if count >= 300: #after game over,
                 #time.sleep(3) #sleep program for 5 seconds
+                if points > highscore:
+                    highscore = points
+                    print(highscore)
                 break
             count += 1
         pygame.display.update()  # updates everytime it changes
-        pygame.display.flip()
+        pygame.display.flip() #update the full screen
 
         clock.tick(60) #fps
 
